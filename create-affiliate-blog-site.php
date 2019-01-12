@@ -57,12 +57,15 @@ function create_new_affiliate_site($affiliate_id = 0, $status = '', $args = arra
 	$affiliate_first_name = $affiliate_wordpress_user->first_name;
 	$affiliate_last_name = $affiliate_wordpress_user->last_name;
 
-	$domain = 'radicalskincare.com';
-	$url_string = '/' . $affiliate_user_id . '/';
+	// get site URL without protocol or trailing slashes
+	$site_url = get_site_url();
+	$parsed_url = parse_url($site_url);
+	$host_url = $parsed_url['host'];
+	$url_string = '/' . $affiliate_id . '/';
 	$site_name = $affiliate_first_name . " " . $affiliate_last_name . " Affiliate Blog";
 
 
-	// wpmu_create_blog($domain, $url_string, $site_name, $affiliate_id);
+	wpmu_create_blog($host_url, $url_string, $site_name, $affiliate_id);
 
 	// Use this line instead of the one above to test that this function can create a blog.
 	// wpmu_create_blog('radicalskincare.com', '/jake/', 'Test Blog', 5640);
