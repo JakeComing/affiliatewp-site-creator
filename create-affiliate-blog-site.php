@@ -1,49 +1,135 @@
 <?php
 
-function shortcode_create_affiliate_blog_site($atts) {
+function get_affiliate_record($atts) {
+
+
 	$attr = shortcode_atts(array(
-		'url_string' => '',
-		'title' => '',
-		'user_id' => 5640 // default to add Jake's user to multisite for diagnostic purposes
-		// 'meta' => '' // initial site options, likely useful in phase 2 of development
+		'affiliate_id' => '',
 	), $atts);
 
-	// create new site
-	// $domain = site_url(1);
-	$domain = 'radicalskincare.com';
-	$url_string = '/' . $attr['url_string'] . '/';
-	$site_name = $attr['title'];
-	// make sure to test if user is logged in. Logged out users should be redirected away from this page
-	$the_user_id = get_current_user_id();
 
-	$new_affiliate_site = wpmu_create_blog($domain, $url_string, $site_name, $the_user_id);
-	if(gettype($new_affiliate_site) === "boolean") {
-		echo var_dump(get_blog_details($new_site_id));
+	$curl = curl_init();
+
+	$curl_url = "https://radicalskincare.com/wp-json/affwp/v1/affiliates/" . $attr['affiliate_id'];
+
+
+
+	curl_setopt_array($curl, array(
+
+	  CURLOPT_URL => $curl_url,
+
+	  CURLOPT_RETURNTRANSFER => true,
+
+	  CURLOPT_ENCODING => "",
+
+	  CURLOPT_MAXREDIRS => 10,
+
+	  CURLOPT_TIMEOUT => 30,
+
+	  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+
+	  CURLOPT_CUSTOMREQUEST => "GET",
+
+	  CURLOPT_POSTFIELDS => "",
+
+	  CURLOPT_HTTPHEADER => array(
+
+	    "Authorization: Basic amFrZWNvbWluZzpqYWtlY29taW5nITEyMw=="
+
+	  ),
+
+	));
+
+
+
+	$response = curl_exec($curl);
+
+	$err = curl_error($curl);
+
+
+
+	curl_close($curl);
+
+
+
+	if ($err) {
+
+	  return var_dump($err);
+
 	} else {
-		echo "Oops, the new site was not created";
-		echo var_dump($new_affiliate_site);
+
+		return json_decode($response, true);
+
 	}
-	
-	//return details for validation purposes
-	// return $new_site;
-	// return var_dump($new_site);
-} add_shortcode( 'create_blog',  'shortcode_create_affiliate_blog_site'); // for testing only, remove for Production
-
-// fires after "Create Affiliate Site" ninja form is submitted
-add_action( 'affwp_set_affiliate_status', function($affiliate_id){
-	
-} , 10, 1);
-do_action( 'affwp_set_affiliate_status', $affiliate->ID, "active", "pending");
-
-// // callback function to process submission. Ninja Forms provides the semantic $form_data object
-function create_new_affiliate_site() {
-	// $affiliate_user_id = $affiliate->ID;
-
-	// wpmu_create_blog( "radicalskincare.com", $affiliate_user_id, "Test Title", 5640);
 
 }
-// 	// THIS ACTION FIRES AFTER NEW SITE IS CREATED: wpmu_new_blog
-	// add_action('wpmu_new_blog', 'send_site_info_to_new_affilliate');
-	function send_site_info_to_new_affilliate() {
-		// send an email to newly accepted affiliate
+
+add_shortcode('get_affiliate', 'get_affiliate_record');
+
+
+
+
+
+//fires after "Create Affiliate Site" ninja form is submitted
+
+
+
+add_action( 'affwp_set_affiliate_status', 'create_new_affiliate_site', 10, 3 );
+
+
+
+function create_new_affiliate_site($affiliate_id = 0, $status = '', $args = array()) {
+
+
+
+	if( empty( $affiliate_id ) || 'active' !== $status ) {
+
+		return;
+
 	}
+
+
+
+	$the_affiliate = get_affiliate_record($affiliate_id);
+
+
+
+
+
+	$affiliate_user_id = $the_affiliate['user_id'];
+
+
+
+	$affiliate_wordpress_user = get_user_by('ID', $affiliate_user_id);
+
+	$affiliate_first_name = $affiliate_wordpress_user->first_name;
+
+	$affiliate_last_name = $affiliate_wordpress_user->last_name;
+
+
+
+	
+
+	$domain = 'radicalskincare.com';
+
+
+
+	$url_string = '/' . $affiliate_user_id . '/';
+
+	$site_name = $affiliate_first_name . " " . $affiliate_last_name . " Affiliate Blog";
+
+
+
+
+
+
+
+	// wpmu_create_blog($domain, $url_string, $site_name, $affiliate_id);
+
+
+
+	// Use this line instead of the one above to test that this function can create a blog. 
+
+	// wpmu_create_blog('radicalskincare.com', '/jake/', 'Test Blog', 5640);
+
+}
